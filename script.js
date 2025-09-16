@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h2 style="font-size: 24px; font-weight: bold; color: #1a202c;">BÁO CÁO TỔNG HỢP VI PHẠM</h2>
                             <p style="color: #4a5568;">Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
                             <div style="font-size: 14px; color: #718096; margin-top: 8px;">
-                                <span><b>Người tạo:</b> ${userInfo.name}</span> | <span><b>Trạng thái:</b> ${userInfo.className}</span>
+                                <span><b>Người tạo:</b> ${userInfo.name}</span> | <span><b>Chức vụ:</b> ${userInfo.className}</span>
                             </div>
                         </div>
                         <div style="font-size: 16px;">`;
@@ -313,19 +313,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const sortedViolations = Object.keys(groupedByViolation).sort();
         for (const violation of sortedViolations) {
             const students = groupedByViolation[violation];
-            // [MODIFIED] Thêm `min-width: 600px;` để ổn định layout
+            // [FIXED] Sửa lỗi ngắt dòng trên màn hình lớn
             reportHTML += `<div style="margin-bottom: 24px;">
                             <h3 style="font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
                                 ${violation.toUpperCase()} - (Tổng số: ${students.length})
                             </h3>
-                            <table style="width: 100%; min-width: 600px; border-collapse: collapse;">
+                            <table style="width: 100%; border-collapse: collapse;">
                                 <thead style="background-color: #f7fafc;">
                                     <tr>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 35%;">Họ và tên</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 35%; white-space: nowrap;">Họ và tên</th>
                                         <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 15%;">Lớp</th>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 15%;">Thời gian</th>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: ${isEditing ? '25%' : '35%'}">Lỗi vi phạm</th>
-                                        ${isEditing ? '<th style="padding: 8px; text-align: center; border: 1px solid #e2e8f0; width: 10%;">Xóa</th>' : ''}
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 15%; white-space: nowrap;">Thời gian</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: ${isEditing ? '25%' : '35%'}; white-space: nowrap;">Lỗi vi phạm</th>
+                                        ${isEditing ? '<th style="padding: 8px; text-align: center; border: 1px solid #e2e8f0; width: 10%; white-space: nowrap;">Xóa</th>' : ''}
                                     </tr>
                                 </thead>
                                 <tbody>`;
@@ -363,14 +363,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (reportElement) {
             const clonedReport = reportElement.cloneNode(true);
 
+            // Tạo một bản sao để xử lý xuất ảnh mà không ảnh hưởng đến giao diện
             clonedReport.style.position = 'absolute';
             clonedReport.style.left = '-9999px';
             clonedReport.style.top = '0';
-            clonedReport.style.width = '1080px'; 
+            // [FIXED] Giảm chiều rộng để giống hóa đơn hơn
+            clonedReport.style.width = '580px'; 
             document.body.appendChild(clonedReport);
 
             html2canvas(clonedReport, { 
-                scale: 2,
+                scale: 2, // Tăng scale để ảnh nét hơn với chiều rộng nhỏ
                 backgroundColor: '#ffffff',
                 windowWidth: clonedReport.scrollWidth,
                 windowHeight: clonedReport.scrollHeight
@@ -383,6 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Lỗi khi xuất PNG:', err);
                 toggleModal(true, 'Lỗi xuất ảnh', 'Không thể tạo tệp ảnh. Vui lòng thử lại.');
             }).finally(() => {
+                // Xóa bản sao sau khi hoàn tất
                 document.body.removeChild(clonedReport);
             });
         }
