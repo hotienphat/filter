@@ -11,6 +11,7 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
+    height: 8px; /* Thêm chiều cao cho thanh cuộn ngang */
 }
 .custom-scrollbar::-webkit-scrollbar-track {
     background: #2d3748;
@@ -34,44 +35,4 @@ body {
     color: white;
     padding: 4px;
     border-radius: 4px;
-}
-
-/* [ADDED] - Cải thiện giao diện bảng trên mobile */
-@media screen and (max-width: 768px) {
-    #report-container table thead {
-        display: none; /* Ẩn đi phần tiêu đề của bảng */
-    }
-
-    #report-container table, 
-    #report-container table tbody, 
-    #report-container table tr, 
-    #report-container table td {
-        display: block; /* Hiển thị các thành phần dưới dạng block */
-        width: 100% !important; /* Ghi đè chiều rộng để chiếm toàn bộ */
-        text-align: right; /* Căn lề phải cho nội dung */
-        padding-left: 50%; /* Tạo không gian bên trái cho label */
-        position: relative;
-    }
-    
-    #report-container table tr {
-        margin-bottom: 1rem; /* Tạo khoảng cách giữa các học sinh */
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        overflow: hidden;
-    }
-
-    #report-container table td::before {
-        content: attr(data-label); /* Lấy nội dung từ thuộc tính data-label */
-        position: absolute;
-        left: 0;
-        width: 50%;
-        padding-left: 10px;
-        font-weight: bold;
-        text-align: left; /* Căn lề trái cho label */
-    }
-    
-    #report-container table td[data-field="violation"] {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
 }
