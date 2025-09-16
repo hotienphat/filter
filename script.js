@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return acc;
         }, {});
 
-        let reportHTML = `<div style="background-color: white; color: black; padding: 24px; border-radius: 8px;">
+        let reportHTML = `<div class="report-content" style="background-color: white; color: black; padding: 24px; border-radius: 8px;">
                         <div class="report-header text-center pb-4 mb-4">
                             <h2 style="font-size: 24px; font-weight: bold; color: #1a202c;">BÁO CÁO TỔNG HỢP VI PHẠM</h2>
                             <p style="color: #4a5568;">Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
@@ -344,11 +344,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 reportHTML += `<tr data-student-id="${student.id}" data-timestamp="${student.timestamp.toISOString()}">
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="violation">${violationOptionsHTML}</td>
-                        ${isEditing ? `<td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;"><button class="delete-row-btn" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Xóa</button></td>` : ''}
+                        <td data-label="Họ và tên: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
+                        <td data-label="Lớp: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
+                        <td data-label="Thời gian: " style="padding: 8px; border: 1px solid #e2e8f0;">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
+                        <td data-label="Vi phạm: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="violation">${violationOptionsHTML}</td>
+                        ${isEditing ? `<td data-label="Hành động: " style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;"><button class="delete-row-btn" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Xóa</button></td>` : ''}
                     </tr>`;
             });
             reportHTML += `</tbody></table></div>`;
@@ -357,10 +357,26 @@ document.addEventListener('DOMContentLoaded', function() {
         reportContainer.innerHTML = reportHTML;
     }
 
+    // [MODIFIED] - Cải thiện chức năng xuất PNG để không bị lỗi trên mobile
     exportPngBtn.addEventListener('click', () => {
-        const reportElement = reportContainer.querySelector('div');
+        const reportElement = reportContainer.querySelector('.report-content');
         if (reportElement) {
-            html2canvas(reportElement, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            // 1. Tạo một bản sao của element để xử lý
+            const clonedReport = reportElement.cloneNode(true);
+
+            // 2. Thêm vào body nhưng ẩn đi và đặt kích thước cố định
+            clonedReport.style.position = 'absolute';
+            clonedReport.style.left = '-9999px';
+            clonedReport.style.top = '0';
+            clonedReport.style.width = '1080px'; // Đặt chiều rộng cố định để nội dung không bị cắt
+            document.body.appendChild(clonedReport);
+
+            html2canvas(clonedReport, { // 3. Chụp ảnh bản sao
+                scale: 2,
+                backgroundColor: '#ffffff',
+                windowWidth: clonedReport.scrollWidth,
+                windowHeight: clonedReport.scrollHeight
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `bao-cao-vi-pham-${new Date().toISOString().slice(0,10)}.png`;
                 link.href = canvas.toDataURL('image/png');
@@ -368,6 +384,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }).catch(err => {
                 console.error('Lỗi khi xuất PNG:', err);
                 toggleModal(true, 'Lỗi xuất ảnh', 'Không thể tạo tệp ảnh. Vui lòng thử lại.');
+            }).finally(() => {
+                // 4. Luôn xóa bản sao sau khi hoàn tất
+                document.body.removeChild(clonedReport);
             });
         }
     });
