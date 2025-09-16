@@ -313,11 +313,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const sortedViolations = Object.keys(groupedByViolation).sort();
         for (const violation of sortedViolations) {
             const students = groupedByViolation[violation];
+            // [MODIFIED] Thêm `min-width: 600px;` để ổn định layout
             reportHTML += `<div style="margin-bottom: 24px;">
                             <h3 style="font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
                                 ${violation.toUpperCase()} - (Tổng số: ${students.length})
                             </h3>
-                            <table style="width: 100%; border-collapse: collapse;">
+                            <table style="width: 100%; min-width: 600px; border-collapse: collapse;">
                                 <thead style="background-color: #f7fafc;">
                                     <tr>
                                         <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 35%;">Họ và tên</th>
@@ -344,11 +345,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 reportHTML += `<tr data-student-id="${student.id}" data-timestamp="${student.timestamp.toISOString()}">
-                        <td data-label="Họ và tên: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
-                        <td data-label="Lớp: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
-                        <td data-label="Thời gian: " style="padding: 8px; border: 1px solid #e2e8f0;">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
-                        <td data-label="Vi phạm: " style="padding: 8px; border: 1px solid #e2e8f0;" data-field="violation">${violationOptionsHTML}</td>
-                        ${isEditing ? `<td data-label="Hành động: " style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;"><button class="delete-row-btn" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Xóa</button></td>` : ''}
+                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
+                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
+                        <td style="padding: 8px; border: 1px solid #e2e8f0;">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
+                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="violation">${violationOptionsHTML}</td>
+                        ${isEditing ? `<td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;"><button class="delete-row-btn" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Xóa</button></td>` : ''}
                     </tr>`;
             });
             reportHTML += `</tbody></table></div>`;
@@ -356,22 +357,19 @@ document.addEventListener('DOMContentLoaded', function() {
         reportHTML += '</div></div>';
         reportContainer.innerHTML = reportHTML;
     }
-
-    // [MODIFIED] - Cải thiện chức năng xuất PNG để không bị lỗi trên mobile
+    
     exportPngBtn.addEventListener('click', () => {
         const reportElement = reportContainer.querySelector('.report-content');
         if (reportElement) {
-            // 1. Tạo một bản sao của element để xử lý
             const clonedReport = reportElement.cloneNode(true);
 
-            // 2. Thêm vào body nhưng ẩn đi và đặt kích thước cố định
             clonedReport.style.position = 'absolute';
             clonedReport.style.left = '-9999px';
             clonedReport.style.top = '0';
-            clonedReport.style.width = '1080px'; // Đặt chiều rộng cố định để nội dung không bị cắt
+            clonedReport.style.width = '1080px'; 
             document.body.appendChild(clonedReport);
 
-            html2canvas(clonedReport, { // 3. Chụp ảnh bản sao
+            html2canvas(clonedReport, { 
                 scale: 2,
                 backgroundColor: '#ffffff',
                 windowWidth: clonedReport.scrollWidth,
@@ -385,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Lỗi khi xuất PNG:', err);
                 toggleModal(true, 'Lỗi xuất ảnh', 'Không thể tạo tệp ảnh. Vui lòng thử lại.');
             }).finally(() => {
-                // 4. Luôn xóa bản sao sau khi hoàn tất
                 document.body.removeChild(clonedReport);
             });
         }
@@ -413,10 +410,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'ViPhamHocSinh');
                 
-                // Thiết lập độ rộng cột
                 worksheet['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 30 }, { wch: 15 }];
 
-                // Merge các ô header
                 worksheet['!merges'] = [
                     { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
                     { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
