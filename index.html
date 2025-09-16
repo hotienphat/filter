@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="icon" type="image/x-icon" href="./Logoweb.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +15,6 @@
 </head>
 <body class="school-bg text-gray-200 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 backdrop-blur-md flex items-center justify-center z-50">
         <div class="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-2xl text-center">
             <h2 class="text-3xl font-bold text-white mb-2">Thông tin Giám thị</h2>
@@ -75,7 +75,7 @@ Phan Thanh C 12A1 xe"></textarea>
             <div class="space-y-6">
                 <h2 class="text-2xl font-semibold text-white">2. Kết quả Tổng hợp</h2>
                 <div id="output-section" class="bg-gray-900/50 p-6 rounded-xl min-h-[400px] flex flex-col justify-between">
-                    <div id="report-wrapper" class="h-[450px] overflow-y-auto custom-scrollbar pr-2">
+                    <div id="report-wrapper" class="h-[450px] overflow-y-auto overflow-x-auto custom-scrollbar pr-2">
                         <div id="report-container" class="p-6 rounded-lg text-black">
                              <p id="placeholder-text" class="text-gray-400 text-center py-20">Chưa có dữ liệu. Vui lòng nhập thông tin và nhấn "Xử lý" để xem báo cáo.</p>
                         </div>
