@@ -9,47 +9,37 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // --- Lấy các element từ DOM ---
-
-    // Login screen elements
     const loginScreen = document.getElementById('login-screen');
     const userNameInput = document.getElementById('user-name-input');
     const userClassInput = document.getElementById('user-class-input');
     const accessBtn = document.getElementById('access-btn');
     const mainContent = document.querySelector('main');
-
-    // Main app elements
     const textInput = document.getElementById('text-input');
     const excelInput = document.getElementById('excel-input');
     const processBtn = document.getElementById('process-btn');
     const reportContainer = document.getElementById('report-container');
     const reportActions = document.getElementById('report-actions');
-    
     const viewModeButtons = document.getElementById('view-mode-buttons');
     const editModeButtons = document.getElementById('edit-mode-buttons');
-
     const exportPngBtn = document.getElementById('export-png-btn');
     const exportExcelBtn = document.getElementById('export-excel-btn');
     const editBtn = document.getElementById('edit-btn');
     const undoBtn = document.getElementById('undo-btn');
-    const clearBtn = document.getElementById('clear-btn');
+    const redoBtn = document.getElementById('redo-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelBtn = document.getElementById('cancel-btn');
-
     const loadingSpinner = document.getElementById('loading-spinner');
-    
-    // Modal elements
     const alertModal = document.getElementById('alert-modal');
     const alertModalContent = document.getElementById('alert-modal-content');
     const alertTitle = document.getElementById('alert-title');
     const alertMessage = document.getElementById('alert-message');
     const alertCloseBtn = document.getElementById('alert-close-btn');
-    const alertConfirmBtn = document.getElementById('alert-confirm-btn');
 
     // --- Biến trạng thái ---
     let userInfo = { name: '', className: '' };
     let processedData = []; // Lưu trữ dữ liệu đã được xử lý
-    let historyStack = []; // Lưu trữ lịch sử các lần nhập
-    let confirmCallback = null;
+    let historyStack = []; // Lưu trữ lịch sử các lần nhập (undo)
+    let redoStack = []; // Lưu trữ lịch sử để làm lại (redo)
 
     // --- Xử lý màn hình đăng nhập ---
     function checkLoginInputs() {
@@ -65,26 +55,15 @@ document.addEventListener('DOMContentLoaded', function() {
     accessBtn.addEventListener('click', () => {
         userInfo.name = userNameInput.value.trim();
         userInfo.className = userClassInput.value.trim();
-
         loginScreen.classList.add('hidden');
         mainContent.classList.remove('hidden');
     });
 
     // --- Hàm tiện ích ---
-    
-    // Hàm hiển thị/đóng modal với animation
-    function toggleModal(show, title, message, isConfirmation = false, onConfirm = null) {
+    function toggleModal(show, title, message) {
         if (show) {
             alertTitle.textContent = title;
             alertMessage.textContent = message;
-            confirmCallback = onConfirm;
-            if (isConfirmation) {
-                alertConfirmBtn.classList.remove('hidden');
-                alertCloseBtn.textContent = 'Hủy';
-            } else {
-                alertConfirmBtn.classList.add('hidden');
-                alertCloseBtn.textContent = 'Đã hiểu';
-            }
             alertModal.classList.remove('hidden');
             setTimeout(() => alertModalContent.classList.add('scale-100', 'opacity-100'), 10);
         } else {
@@ -94,17 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     alertCloseBtn.addEventListener('click', () => toggleModal(false));
-    alertConfirmBtn.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        toggleModal(false);
-    });
 
-    // Hàm bỏ dấu tiếng Việt
+    function updateUndoRedoButtons() {
+        undoBtn.disabled = historyStack.length === 0;
+        redoBtn.disabled = redoStack.length === 0;
+    }
+
     function removeAccents(str) {
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
     }
 
-    // Hàm chuẩn hóa chuỗi lỗi vi phạm
     function normalizeViolation(text) {
         const normalized = removeAccents(text.toLowerCase().trim());
         if (normalized.includes('khong mang the') || normalized.includes('quen the')) return VIOLATIONS.KHONG_MANG_THE;
@@ -112,25 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (normalized.includes('khong mac ao doan') || normalized.includes('ao doan')) return VIOLATIONS.KHONG_MAC_AO_DOAN;
         if (normalized.includes('mang dep') || normalized.includes('dep le')) return VIOLATIONS.MANG_DEP_LE;
         if (normalized.includes('tren 50cc')) return VIOLATIONS.DI_XE_50CC;
-        if (normalized === 'the') return VIOLATIONS.KHONG_MANG_THE;
-        if (normalized === 'muon') return VIOLATIONS.DI_HOC_MUON;
-        if (normalized === 'ao') return VIOLATIONS.KHONG_MAC_AO_DOAN;
-        if (normalized === 'dep') return VIOLATIONS.MANG_DEP_LE;
-        if (normalized === 'xe') return VIOLATIONS.DI_XE_50CC;
+        if (['the', 'khong the'].includes(normalized)) return VIOLATIONS.KHONG_MANG_THE;
+        if (['muon', 'di muon'].includes(normalized)) return VIOLATIONS.DI_HOC_MUON;
+        if (['ao', 'ao doan'].includes(normalized)) return VIOLATIONS.KHONG_MAC_AO_DOAN;
+        if (['dep', 'dep le'].includes(normalized)) return VIOLATIONS.MANG_DEP_LE;
+        if (['xe', 'xe 50'].includes(normalized)) return VIOLATIONS.DI_XE_50CC;
         return text;
     }
     
-    // Hàm chuyển đổi chế độ xem/sửa
     function toggleEditMode(isEditing) {
-        if(isEditing) {
-            viewModeButtons.classList.add('hidden');
-            editModeButtons.classList.remove('hidden');
-            processBtn.disabled = true;
-        } else {
-            viewModeButtons.classList.remove('hidden');
-            editModeButtons.classList.add('hidden');
-            processBtn.disabled = false;
-        }
+        viewModeButtons.classList.toggle('hidden', isEditing);
+        editModeButtons.classList.toggle('hidden', !isEditing);
+        processBtn.disabled = isEditing;
         displayReport(processedData, isEditing);
     }
     
@@ -159,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             historyStack.push([...processedData]);
+            redoStack = []; // Xóa lịch sử redo khi có hành động mới
             processedData = processedData.concat(newStudents);
             displayReport(processedData);
             
@@ -171,22 +143,26 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             loadingSpinner.classList.add('hidden');
             processBtn.disabled = false;
+            updateUndoRedoButtons();
         }
     });
     
     undoBtn.addEventListener('click', () => {
         if (historyStack.length > 0) {
+            redoStack.push([...processedData]); // Lưu trạng thái hiện tại vào redo
             processedData = historyStack.pop();
             displayReport(processedData);
+            updateUndoRedoButtons();
         }
     });
 
-    clearBtn.addEventListener('click', () => {
-        toggleModal(true, 'Xác nhận Xóa', 'Bạn có chắc chắn muốn xóa toàn bộ báo cáo không? Hành động này không thể hoàn tác.', true, () => {
-            processedData = [];
-            historyStack = [];
-            displayReport([]);
-        });
+    redoBtn.addEventListener('click', () => {
+        if (redoStack.length > 0) {
+            historyStack.push([...processedData]); // Lưu trạng thái hiện tại vào undo
+            processedData = redoStack.pop();
+            displayReport(processedData);
+            updateUndoRedoButtons();
+        }
     });
 
     editBtn.addEventListener('click', () => toggleEditMode(true));
@@ -194,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     saveBtn.addEventListener('click', () => {
         historyStack.push([...processedData]);
+        redoStack = []; // Xóa lịch sử redo khi có hành động mới
         const newData = [];
         const rows = reportContainer.querySelectorAll('tbody tr');
         rows.forEach(row => {
@@ -209,12 +186,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         processedData = newData;
         toggleEditMode(false);
+        updateUndoRedoButtons();
     });
 
-    // Sử dụng event delegation để xử lý nút xóa
     reportContainer.addEventListener('click', (e) => {
         if (e.target && e.target.classList.contains('delete-row-btn')) {
             e.target.closest('tr').remove();
+        }
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+        if (processedData.length > 0) {
+            const confirmationMessage = 'Bạn có chắc chắn muốn rời khỏi trang? Dữ liệu chưa lưu sẽ bị mất.';
+            (e || window.event).returnValue = confirmationMessage; // For IE and Firefox
+            return confirmationMessage; // For Safari
         }
     });
 
@@ -224,28 +209,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return text.split('\n').map(line => line.trim()).filter(line => line)
             .map(line => {
                 let student = null;
-                if (line.includes('-')) {
-                    const parts = line.split('-').map(part => part.trim());
-                    if (parts.length >= 3) {
-                        student = { 'Họ và tên': parts[0], 'Lớp': parts[1], 'Lỗi vi phạm': normalizeViolation(parts.slice(2).join('-').trim()) };
-                    }
+                const parts = line.split('-').map(part => part.trim());
+                if (parts.length >= 3) {
+                     student = { 'Họ và tên': parts[0], 'Lớp': parts[1], 'Lỗi vi phạm': normalizeViolation(parts.slice(2).join('-').trim()) };
                 } else {
                     const match = line.match(classRegex);
                     if (match) {
                         const className = match[0];
                         const name = line.substring(0, match.index).trim();
-                        const violation = line.substring(match.index + className.length).trim();
-                        if (name && className && violation) {
-                            student = { 'Họ và tên': name, 'Lớp': className, 'Lỗi vi phạm': normalizeViolation(violation) };
+                        const violationText = line.substring(match.index + className.length).trim();
+                        if (name && className && violationText) {
+                            student = { 'Họ và tên': name, 'Lớp': className, 'Lỗi vi phạm': normalizeViolation(violationText) };
                         }
                     }
                 }
                 if (student) {
                     student.id = crypto.randomUUID();
-                    student.timestamp = new Date(); // Thêm thời gian thực
+                    student.timestamp = new Date();
                 }
                 return student;
-            }).filter(s => s !== null);
+            }).filter(Boolean);
     }
 
     function parseExcelInput(file) {
@@ -259,12 +242,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const worksheet = workbook.Sheets[sheetName];
                     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     if (json.length < 2) { resolve([]); return; }
-                    const headers = json[0].map(h => h.toString().toLowerCase().trim());
-                    const nameIndex = headers.indexOf('họ và tên');
-                    const classIndex = headers.indexOf('lớp');
-                    const violationIndex = headers.indexOf('lỗi vi phạm');
+
+                    const headers = json[0].map(h => removeAccents(h.toString().toLowerCase().trim()));
+                    const nameIndex = headers.indexOf('ho va ten');
+                    const classIndex = headers.indexOf('lop');
+                    const violationIndex = headers.indexOf('loi vi pham');
+                    
                     if (nameIndex === -1 || classIndex === -1 || violationIndex === -1) {
-                        reject(new Error('Tệp Excel thiếu các cột bắt buộc.'));
+                        reject(new Error('Tệp Excel thiếu các cột bắt buộc: Họ và tên, Lớp, Lỗi vi phạm.'));
                         return;
                     }
                     const students = json.slice(1).map(row => ({
@@ -272,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Họ và tên': row[nameIndex], 
                         'Lớp': row[classIndex],
                         'Lỗi vi phạm': normalizeViolation(row[violationIndex] ? row[violationIndex].toString() : ''),
-                        timestamp: new Date() // Thêm thời gian thực
+                        timestamp: new Date()
                     })).filter(s => s['Họ và tên'] && s['Lớp'] && s['Lỗi vi phạm']);
                     resolve(students);
                 } catch (e) { reject(e); }
@@ -284,95 +269,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Hiển thị và xuất báo cáo ---
     function displayReport(data, isEditing = false) {
-        if (data.length === 0) {
+        // If there is no data and no history to redo, hide the action panel.
+        if (data.length === 0 && redoStack.length === 0) {
             reportContainer.innerHTML = `<p class="text-gray-400 text-center py-20">Chưa có dữ liệu.</p>`;
             reportActions.classList.add('hidden');
             return;
         }
 
         reportActions.classList.remove('hidden');
-        undoBtn.disabled = historyStack.length === 0;
+        
+        if (data.length === 0) {
+            // Data is empty, but we can redo, so just show the placeholder.
+            reportContainer.innerHTML = `<p class="text-gray-400 text-center py-20">Chưa có dữ liệu.</p>`;
+        } else {
+            const groupedByViolation = data.reduce((acc, student) => {
+                const violation = student['Lỗi vi phạm'];
+                if (!acc[violation]) acc[violation] = [];
+                acc[violation].push(student);
+                return acc;
+            }, {});
 
-        const groupedByViolation = data.reduce((acc, student) => {
-            const violation = student['Lỗi vi phạm'];
-            if (!acc[violation]) acc[violation] = [];
-            acc[violation].push(student);
-            return acc;
-        }, {});
-
-        let reportHTML = `<div class="report-content" style="background-color: white; color: black; padding: 24px; border-radius: 8px;">
-                        <div class="report-header text-center pb-4 mb-4">
-                            <h2 style="font-size: 24px; font-weight: bold; color: #1a202c;">BÁO CÁO TỔNG HỢP VI PHẠM</h2>
-                            <p style="color: #4a5568;">Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
-                            <div style="font-size: 14px; color: #718096; margin-top: 8px;">
-                                <span><b>Người tạo:</b> ${userInfo.name}</span> | <span><b>Chức vụ:</b> ${userInfo.className}</span>
+            let reportHTML = `<div class="report-content bg-white text-black p-6 rounded-lg">
+                            <div class="report-header text-center pb-4 mb-4 border-b">
+                                <h2 class="text-2xl font-bold text-gray-800">BÁO CÁO TỔNG HỢP VI PHẠM</h2>
+                                <p class="text-gray-600">Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
+                                <div class="text-sm text-gray-500 mt-2">
+                                    <span><b>Người tạo:</b> ${userInfo.name}</span> | <span><b>Chức vụ:</b> ${userInfo.className}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div style="font-size: 16px;">`;
+                            <div class="text-base">`;
 
-        const sortedViolations = Object.keys(groupedByViolation).sort();
-        for (const violation of sortedViolations) {
-            const students = groupedByViolation[violation];
-            // [FIXED] Sửa lỗi ngắt dòng trên màn hình lớn
-            reportHTML += `<div style="margin-bottom: 24px;">
-                            <h3 style="font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
-                                ${violation.toUpperCase()} - (Tổng số: ${students.length})
-                            </h3>
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead style="background-color: #f7fafc;">
-                                    <tr>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 35%; white-space: nowrap;">Họ và tên</th>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 15%;">Lớp</th>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: 15%; white-space: nowrap;">Thời gian</th>
-                                        <th style="padding: 8px; text-align: left; border: 1px solid #e2e8f0; width: ${isEditing ? '25%' : '35%'}; white-space: nowrap;">Lỗi vi phạm</th>
-                                        ${isEditing ? '<th style="padding: 8px; text-align: center; border: 1px solid #e2e8f0; width: 10%; white-space: nowrap;">Xóa</th>' : ''}
-                                    </tr>
-                                </thead>
-                                <tbody>`;
-            students.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).forEach((student) => {
-                let violationOptionsHTML = '';
-                if (isEditing) {
-                    const otherOptions = Object.values(VIOLATIONS)
-                        .filter(v => v !== student['Lỗi vi phạm'])
-                        .map(v => `<option value="${v}">${v}</option>`)
-                        .join('');
-                    violationOptionsHTML = `<select style="width:100%; border:1px solid #ccc; padding: 4px; border-radius: 4px;">
-                        <option value="${student['Lỗi vi phạm']}" selected>${student['Lỗi vi phạm']}</option>
-                        ${otherOptions}
-                    </select>`;
-                } else {
-                    violationOptionsHTML = student['Lỗi vi phạm'];
-                }
+            const sortedViolations = Object.keys(groupedByViolation).sort();
+            for (const violation of sortedViolations) {
+                const students = groupedByViolation[violation];
+                reportHTML += `<div class="mb-6">
+                                <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-3">
+                                    ${violation.toUpperCase()} - (Tổng số: ${students.length})
+                                </h3>
+                                <table class="w-full border-collapse">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="p-2 text-left border w-[35%]">Họ và tên</th>
+                                            <th class="p-2 text-left border w-[15%]">Lớp</th>
+                                            <th class="p-2 text-left border w-[15%]">Thời gian</th>
+                                            <th class="p-2 text-left border w-[${isEditing ? '25%' : '35%'}]">Lỗi vi phạm</th>
+                                            ${isEditing ? '<th class="p-2 text-center border w-[10%]">Xóa</th>' : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                students.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).forEach((student) => {
+                    let violationCellHTML = student['Lỗi vi phạm'];
+                    if (isEditing) {
+                        const options = Object.values(VIOLATIONS)
+                            .map(v => `<option value="${v}" ${v === student['Lỗi vi phạm'] ? 'selected' : ''}>${v}</option>`)
+                            .join('');
+                        violationCellHTML = `<select class="w-full border border-gray-300 p-1 rounded">${options}</select>`;
+                    }
 
-                reportHTML += `<tr data-student-id="${student.id}" data-timestamp="${student.timestamp.toISOString()}">
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0;" data-field="violation">${violationOptionsHTML}</td>
-                        ${isEditing ? `<td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;"><button class="delete-row-btn" style="background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Xóa</button></td>` : ''}
-                    </tr>`;
-            });
-            reportHTML += `</tbody></table></div>`;
+                    reportHTML += `<tr data-student-id="${student.id}" data-timestamp="${student.timestamp.toISOString()}">
+                            <td class="p-2 border" data-field="name" ${isEditing ? 'contenteditable="true"' : ''}>${student['Họ và tên']}</td>
+                            <td class="p-2 border" data-field="class" ${isEditing ? 'contenteditable="true"' : ''}>${student['Lớp']}</td>
+                            <td class="p-2 border">${new Date(student.timestamp).toLocaleTimeString('vi-VN')}</td>
+                            <td class="p-2 border" data-field="violation">${violationCellHTML}</td>
+                            ${isEditing ? `<td class="p-2 border text-center"><button class="delete-row-btn bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs">Xóa</button></td>` : ''}
+                        </tr>`;
+                });
+                reportHTML += `</tbody></table></div>`;
+            }
+            reportHTML += '</div></div>';
+            reportContainer.innerHTML = reportHTML;
         }
-        reportHTML += '</div></div>';
-        reportContainer.innerHTML = reportHTML;
     }
     
     exportPngBtn.addEventListener('click', () => {
         const reportElement = reportContainer.querySelector('.report-content');
         if (reportElement) {
             const clonedReport = reportElement.cloneNode(true);
-
-            // Tạo một bản sao để xử lý xuất ảnh mà không ảnh hưởng đến giao diện
             clonedReport.style.position = 'absolute';
             clonedReport.style.left = '-9999px';
             clonedReport.style.top = '0';
-            // [FIXED] Giảm chiều rộng để giống hóa đơn hơn
-            clonedReport.style.width = '580px'; 
+            clonedReport.style.width = '800px'; 
             document.body.appendChild(clonedReport);
 
             html2canvas(clonedReport, { 
-                scale: 2, // Tăng scale để ảnh nét hơn với chiều rộng nhỏ
+                scale: 2,
                 backgroundColor: '#ffffff',
                 windowWidth: clonedReport.scrollWidth,
                 windowHeight: clonedReport.scrollHeight
@@ -385,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Lỗi khi xuất PNG:', err);
                 toggleModal(true, 'Lỗi xuất ảnh', 'Không thể tạo tệp ảnh. Vui lòng thử lại.');
             }).finally(() => {
-                // Xóa bản sao sau khi hoàn tất
                 document.body.removeChild(clonedReport);
             });
         }
@@ -398,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ["BÁO CÁO TỔNG HỢP VI PHẠM"],
                     [`Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}`],
                     [`Người tạo: ${userInfo.name} (${userInfo.className})`],
-                    [], // Dòng trống
+                    [], 
                     ['Họ và tên', 'Lớp', 'Lỗi vi phạm', 'Thời gian']
                 ];
 
@@ -414,7 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'ViPhamHocSinh');
                 
                 worksheet['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 30 }, { wch: 15 }];
-
                 worksheet['!merges'] = [
                     { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
                     { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
@@ -428,4 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Khởi tạo trạng thái ban đầu của nút
+    updateUndoRedoButtons();
 });
