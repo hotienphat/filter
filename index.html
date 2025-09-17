@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tiện ích lọc các lỗi vi phạm của học sinh</title>
+    <link rel="icon" type="image/x-icon" href="./Logoweb.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="icon" type="image/x-icon" href="./Logoweb.svg">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="school-bg text-gray-200 min-h-screen flex items-center justify-center p-4">
@@ -75,9 +77,9 @@ Phan Thanh C 12A1 xe"></textarea>
             <div class="space-y-6">
                 <h2 class="text-2xl font-semibold text-white">2. Kết quả Tổng hợp</h2>
                 <div id="output-section" class="bg-gray-900/50 p-6 rounded-xl min-h-[400px] flex flex-col justify-between">
-                    <div id="report-wrapper" class="h-[450px] overflow-y-auto overflow-x-auto custom-scrollbar pr-2">
-                        <div id="report-container" class="p-6 rounded-lg text-black">
-                             <p id="placeholder-text" class="text-gray-400 text-center py-20">Chưa có dữ liệu. Vui lòng nhập thông tin và nhấn "Xử lý" để xem báo cáo.</p>
+                    <div class="h-[450px] overflow-y-auto overflow-x-auto custom-scrollbar pr-2">
+                        <div id="report-container" class="rounded-lg">
+                             <p class="text-gray-400 text-center py-20">Chưa có dữ liệu. Vui lòng nhập thông tin và nhấn "Xử lý" để xem báo cáo.</p>
                         </div>
                     </div>
                     <div id="report-actions" class="mt-6 space-y-3 hidden">
@@ -95,8 +97,8 @@ Phan Thanh C 12A1 xe"></textarea>
                                 <button id="undo-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                                     Hoàn tác
                                 </button>
-                                <button id="clear-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md">
-                                    Xóa tất cả
+                                <button id="redo-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Làm lại
                                 </button>
                             </div>
                         </div>
@@ -121,8 +123,7 @@ Phan Thanh C 12A1 xe"></textarea>
             <h3 id="alert-title" class="text-xl font-bold text-white mb-4">Thông báo</h3>
             <p id="alert-message" class="text-gray-300 mb-6"></p>
             <div class="flex justify-center gap-4">
-                <button id="alert-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Hủy</button>
-                <button id="alert-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg hidden">Xác nhận</button>
+                <button id="alert-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Đã hiểu</button>
             </div>
         </div>
     </div>
