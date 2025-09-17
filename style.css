@@ -27,3 +27,32 @@ body {
     padding: 4px;
     border-radius: 4px;
 }
+
+/* --- CSS MỚI ĐƯỢC THÊM VÀO ĐỂ TỐI ƯU HÓA ẢNH XUẤT RA --- */
+/* Các quy tắc này chỉ áp dụng khi xuất file PNG */
+.export-style {
+    padding: 16px !important; /* Giảm padding tổng thể */
+    font-size: 12px !important; /* Giảm kích thước chữ cơ bản */
+}
+.export-style .report-header {
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+}
+.export-style h2 {
+    font-size: 18px !important; /* Giảm kích thước tiêu đề chính */
+}
+.export-style h3 {
+    font-size: 14px !important; /* Giảm kích thước tiêu đề phụ */
+    padding-bottom: 4px !important;
+    margin-bottom: 8px !important;
+}
+.export-style .mb-6 {
+    margin-bottom: 16px !important; /* Giảm khoảng cách giữa các mục vi phạm */
+}
+.export-style th, .export-style td {
+    padding: 5px 8px !important; /* Giảm padding trong các ô của bảng */
+    font-size: 12px !important;
+}
+.export-style .text-sm {
+    font-size: 11px !important;
+}
