@@ -340,18 +340,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // --- THAY ĐỔI TRONG HÀM XUẤT PNG ---
     exportPngBtn.addEventListener('click', () => {
         const reportElement = reportContainer.querySelector('.report-content');
         if (reportElement) {
             const clonedReport = reportElement.cloneNode(true);
+            
+            // Thêm class và style để tối ưu hóa cho việc xuất ảnh
+            clonedReport.classList.add('export-style'); // Thêm class để áp dụng style gọn gàng
             clonedReport.style.position = 'absolute';
             clonedReport.style.left = '-9999px';
             clonedReport.style.top = '0';
-            clonedReport.style.width = '800px'; 
+            clonedReport.style.width = '450px'; // Giảm chiều rộng để ảnh gọn hơn
+            
             document.body.appendChild(clonedReport);
 
             html2canvas(clonedReport, { 
-                scale: 2,
+                scale: 2, // Giữ độ phân giải cao
                 backgroundColor: '#ffffff',
                 windowWidth: clonedReport.scrollWidth,
                 windowHeight: clonedReport.scrollHeight
@@ -364,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Lỗi khi xuất PNG:', err);
                 toggleModal(true, 'Lỗi xuất ảnh', 'Không thể tạo tệp ảnh. Vui lòng thử lại.');
             }).finally(() => {
+                // Xóa bản sao sau khi hoàn thành
                 document.body.removeChild(clonedReport);
             });
         }
