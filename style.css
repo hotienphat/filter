@@ -8,7 +8,7 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
-    height: 8px; /* Thêm chiều cao cho thanh cuộn ngang */
+    height: 8px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
     background: #2d3748;
@@ -19,12 +19,6 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #718096;
-}
-#report-container {
-    background-color: #2d3748;
-}
-.report-header {
-    border-bottom: 2px solid #4a5568;
 }
 [contenteditable="true"] {
     outline: 2px dashed #4299e1;
