@@ -306,13 +306,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-3">
                                     ${violation.toUpperCase()} - (Tổng số: ${students.length})
                                 </h3>
-                                <table class="w-full border-collapse">
+                                <table class="min-w-full border-collapse">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th class="p-2 text-left border w-[35%]">Họ và tên</th>
-                                            <th class="p-2 text-left border w-[15%]">Lớp</th>
-                                            <th class="p-2 text-left border w-[15%]">Thời gian</th>
-                                            <th class="p-2 text-left border w-[${isEditing ? '25%' : '35%'}]">Lỗi vi phạm</th>
+                                            <th class="p-2 text-left border w-[35%] whitespace-nowrap">Họ và tên</th>
+                                            <th class="p-2 text-left border w-[15%] whitespace-nowrap">Lớp</th>
+                                            <th class="p-2 text-left border w-[15%] whitespace-nowrap">Thời gian</th>
+                                            <th class="p-2 text-left border w-[${isEditing ? '25%' : '35%'}] whitespace-nowrap">Lỗi vi phạm</th>
                                             ${isEditing ? '<th class="p-2 text-center border w-[10%]">Xóa</th>' : ''}
                                         </tr>
                                     </thead>
