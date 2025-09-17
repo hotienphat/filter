@@ -269,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Hiển thị và xuất báo cáo ---
     function displayReport(data, isEditing = false) {
-        // If there is no data and no history to redo, hide the action panel.
         if (data.length === 0 && redoStack.length === 0) {
             reportContainer.innerHTML = `<p class="text-gray-400 text-center py-20">Chưa có dữ liệu.</p>`;
             reportActions.classList.add('hidden');
@@ -279,7 +278,6 @@ document.addEventListener('DOMContentLoaded', function() {
         reportActions.classList.remove('hidden');
         
         if (data.length === 0) {
-            // Data is empty, but we can redo, so just show the placeholder.
             reportContainer.innerHTML = `<p class="text-gray-400 text-center py-20">Chưa có dữ liệu.</p>`;
         } else {
             const groupedByViolation = data.reduce((acc, student) => {
@@ -306,24 +304,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-3">
                                     ${violation.toUpperCase()} - (Tổng số: ${students.length})
                                 </h3>
-                                <table class="min-w-full border-collapse">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="p-2 text-left border w-[35%] whitespace-nowrap">Họ và tên</th>
-                                            <th class="p-2 text-left border w-[15%] whitespace-nowrap">Lớp</th>
-                                            <th class="p-2 text-left border w-[15%] whitespace-nowrap">Thời gian</th>
-                                            <th class="p-2 text-left border w-[${isEditing ? '25%' : '35%'}] whitespace-nowrap">Lỗi vi phạm</th>
-                                            ${isEditing ? '<th class="p-2 text-center border w-[10%]">Xóa</th>' : ''}
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full border-collapse">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="p-2 text-left border whitespace-nowrap">Họ và tên</th>
+                                                <th class="p-2 text-left border whitespace-nowrap">Lớp</th>
+                                                <th class="p-2 text-left border whitespace-nowrap">Thời gian</th>
+                                                <th class="p-2 text-left border whitespace-nowrap">Lỗi vi phạm</th>
+                                                ${isEditing ? '<th class="p-2 text-center border">Xóa</th>' : ''}
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
                 students.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).forEach((student) => {
                     let violationCellHTML = student['Lỗi vi phạm'];
                     if (isEditing) {
                         const options = Object.values(VIOLATIONS)
                             .map(v => `<option value="${v}" ${v === student['Lỗi vi phạm'] ? 'selected' : ''}>${v}</option>`)
                             .join('');
-                        violationCellHTML = `<select class="w-full border border-gray-300 p-1 rounded">${options}</select>`;
+                        violationCellHTML = `<select class="w-full border border-gray-300 p-1 rounded min-w-[200px]">${options}</select>`;
                     }
 
                     reportHTML += `<tr data-student-id="${student.id}" data-timestamp="${student.timestamp.toISOString()}">
@@ -334,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${isEditing ? `<td class="p-2 border text-center"><button class="delete-row-btn bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs">Xóa</button></td>` : ''}
                         </tr>`;
                 });
-                reportHTML += `</tbody></table></div>`;
+                reportHTML += `</tbody></table></div></div>`;
             }
             reportHTML += '</div></div>';
             reportContainer.innerHTML = reportHTML;
