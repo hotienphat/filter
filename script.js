@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // CẤU HÌNH & KHỞI TẠO
-    const STORAGE_KEY = 'GiamThiAI_Data_v1'; // Key lưu trữ
+    const STORAGE_KEY = 'GiamThiAI_Data_v1';
     const VIOLATION_MAP = {
         'KHONG_MANG_THE': { label: 'Không mang thẻ học viên', keys: ['the', 'khong mang the', 'deo the', 'quang the', 'quen the', 'k the', 'ko the'] },
         'KHONG_MAC_AO_DOAN': { label: 'Không mặc áo đoàn', keys: ['ao doan', 'doan', 'aodoan', 'khong mac ao doan', 'k ao doan', 'thieu ao doan'] },
@@ -45,9 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- CÁC HÀM XỬ LÝ LƯU TRỮ (AUTO SAVE) ---
+    const formatTime = (isoString) => {
+        const d = new Date(isoString);
+        return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // --- CÁC HÀM XỬ LÝ LƯU TRỮ ---
     const saveToLocal = () => {
-        // Chỉ lưu thông tin cần thiết, không lưu lịch sử undo để nhẹ bộ nhớ
         const dataToSave = {
             monitorName: appState.monitorName,
             monitorClass: appState.monitorClass,
@@ -61,28 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                // Khôi phục dữ liệu vào state
                 if (parsed.monitorName) appState.monitorName = parsed.monitorName;
                 if (parsed.monitorClass) appState.monitorClass = parsed.monitorClass;
                 if (parsed.students && Array.isArray(parsed.students)) appState.students = parsed.students;
 
-                // Nếu có dữ liệu đăng nhập, tự động bỏ qua màn hình login
                 if (appState.monitorName && appState.monitorClass) {
                     els.userNameIn.value = appState.monitorName;
                     els.userClassIn.value = appState.monitorClass;
-                    switchToMainApp(false); // false = không cần animation chậm
+                    switchToMainApp(false);
                     renderReport();
                     showToast('Khôi phục', 'Đã lấy lại dữ liệu phiên trước.');
                 }
             } catch (e) {
-                console.error("Lỗi khôi phục dữ liệu cũ", e);
                 localStorage.removeItem(STORAGE_KEY);
             }
         }
     };
 
     // --- LOGIC GIAO DIỆN & XỬ LÝ ---
-
     setInterval(() => {
         els.clock.textContent = new Date().toLocaleTimeString('vi-VN', { hour12: false });
     }, 1000);
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.accessBtn.addEventListener('click', () => {
         appState.monitorName = els.userNameIn.value.trim();
         appState.monitorClass = els.userClassIn.value.trim();
-        saveToLocal(); // Lưu thông tin đăng nhập ngay
+        saveToLocal();
         switchToMainApp();
     });
 
@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = rawText.split(/\n+/);
         const results = [];
         const classRegex = /\b([1-9][0-2]?[a-zA-Z][0-9]{0,2})\b/;
+        const now = new Date(); // Lấy thời gian thực khi nhấn nút xử lý
 
         lines.forEach(line => {
             line = line.trim().replace(/\s+/g, ' ');
@@ -161,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (name) results.push({ id: Date.now() + Math.random(), name: toTitleCase(name), class: className || '?', violation: detectViolation(violation), time: new Date() });
+            if (name) results.push({ id: Date.now() + Math.random(), name: toTitleCase(name), class: className || '?', violation: detectViolation(violation), time: now });
         });
         return results;
     };
@@ -174,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newStudents = smartParse(els.textInput.value);
         appState.students = [...appState.students, ...newStudents];
         
-        saveToLocal(); // Lưu sau khi thêm
+        saveToLocal();
         renderReport();
         els.textInput.value = '';
         showToast('Thành công', `Đã thêm ${newStudents.length} học sinh.`);
@@ -183,13 +184,13 @@ document.addEventListener('DOMContentLoaded', () => {
     els.processBtn.addEventListener('click', handleProcessData);
     els.textInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (els.textInput.value.trim()) handleProcessData(); } });
 
+    // Voice & OCR logic giữ nguyên, rút gọn để tập trung
     if ('webkitSpeechRecognition' in window) {
         const recognition = new webkitSpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'vi-VN';
         let isListening = false;
-
         recognition.onresult = event => {
             let final = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) if (event.results[i].isFinal) final += event.results[i][0].transcript + '\n';
@@ -225,13 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (e) => {
             const json = XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(e.target.result), { type: 'array' }).Sheets[XLSX.read(new Uint8Array(e.target.result), { type: 'array' }).SheetNames[0]], { header: 1 });
             const newStudents = [];
-            for (let i = 1; i < json.length; i++) if (json[i].length >= 3) newStudents.push({ id: Date.now() + Math.random(), name: toTitleCase(json[i][0] || ''), class: (json[i][1] || '').toString().toUpperCase(), violation: detectViolation(json[i][2] || ''), time: new Date() });
+            const now = new Date();
+            for (let i = 1; i < json.length; i++) if (json[i].length >= 3) newStudents.push({ id: Date.now() + Math.random(), name: toTitleCase(json[i][0] || ''), class: (json[i][1] || '').toString().toUpperCase(), violation: detectViolation(json[i][2] || ''), time: now });
             
             if (newStudents.length > 0) { 
                 appState.history.push([...appState.students]); 
                 els.undoBtn.disabled = false; 
                 appState.students = [...appState.students, ...newStudents]; 
-                saveToLocal(); // Lưu sau khi nhập Excel
+                saveToLocal();
                 renderReport(); 
                 showToast('Excel', `Đã nhập ${newStudents.length} dòng.`); 
             }
@@ -258,8 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         let sttTotal = 1;
         for (const [vName, students] of Object.entries(groupedData)) {
-            html += `<div class="mb-6"><div class="bg-gray-700/50 backdrop-blur-sm p-3 rounded-t-lg border-b border-gray-600 flex justify-between items-center sticky top-0 z-10"><h4 class="font-bold text-blue-400 uppercase text-sm flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i>${vName}</h4><span class="bg-blue-900/50 text-blue-200 text-xs px-2 py-1 rounded-full font-mono">${students.length}</span></div><table class="w-full text-left border-collapse bg-gray-800/40 rounded-b-lg overflow-hidden"><thead class="bg-gray-800/60 text-xs uppercase text-gray-400"><tr><th class="p-3 w-12 text-center">STT</th><th class="p-3">Họ và Tên</th><th class="p-3 w-24 text-center">Lớp</th><th class="p-3 w-10"></th></tr></thead><tbody class="divide-y divide-gray-700/50">`;
-            students.forEach(s => html += `<tr class="hover:bg-gray-700/30 transition-colors group"><td class="p-3 text-gray-500 font-mono text-sm text-center">${sttTotal++}</td><td class="p-3 font-medium text-gray-200">${s.name}</td><td class="p-3 text-center"><span class="bg-gray-700 text-yellow-400 px-2 py-1 rounded text-xs font-bold font-mono border border-gray-600">${s.class}</span></td><td class="p-3 text-center"><button onclick="deleteRow('${s.id}')" class="text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-700"><i class="fa-solid fa-xmark"></i></button></td></tr>`);
+            // Cập nhật header bảng HTML để thêm cột Giờ
+            html += `<div class="mb-6"><div class="bg-gray-700/50 backdrop-blur-sm p-3 rounded-t-lg border-b border-gray-600 flex justify-between items-center sticky top-0 z-10"><h4 class="font-bold text-blue-400 uppercase text-sm flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i>${vName}</h4><span class="bg-blue-900/50 text-blue-200 text-xs px-2 py-1 rounded-full font-mono">${students.length}</span></div><table class="w-full text-left border-collapse bg-gray-800/40 rounded-b-lg overflow-hidden"><thead class="bg-gray-800/60 text-xs uppercase text-gray-400"><tr><th class="p-3 w-12 text-center">STT</th><th class="p-3 w-20 text-center">Giờ</th><th class="p-3">Họ và Tên</th><th class="p-3 w-24 text-center">Lớp</th><th class="p-3 w-10"></th></tr></thead><tbody class="divide-y divide-gray-700/50">`;
+            
+            // Cập nhật dòng HTML để hiển thị Giờ
+            students.forEach(s => html += `<tr class="hover:bg-gray-700/30 transition-colors group"><td class="p-3 text-gray-500 font-mono text-sm text-center">${sttTotal++}</td><td class="p-3 text-gray-400 font-mono text-sm text-center">${formatTime(s.time)}</td><td class="p-3 font-medium text-gray-200">${s.name}</td><td class="p-3 text-center"><span class="bg-gray-700 text-yellow-400 px-2 py-1 rounded text-xs font-bold font-mono border border-gray-600">${s.class}</span></td><td class="p-3 text-center"><button onclick="deleteRow('${s.id}')" class="text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-700"><i class="fa-solid fa-xmark"></i></button></td></tr>`);
+            
             html += `</tbody></table></div>`;
         }
         container.innerHTML = html;
@@ -269,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.history.push([...appState.students]); 
         els.undoBtn.disabled = false; 
         appState.students = appState.students.filter(s => s.id != id); 
-        saveToLocal(); // Lưu sau khi xoá
+        saveToLocal();
         renderReport(); 
     };
 
@@ -277,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (appState.history.length > 0) { 
             appState.students = appState.history.pop(); 
             if (appState.history.length === 0) els.undoBtn.disabled = true; 
-            saveToLocal(); // Lưu sau khi undo
+            saveToLocal();
             renderReport(); 
             showToast('Undo', 'Đã hoàn tác.'); 
         } 
@@ -288,10 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appState.history.push([...appState.students]); 
             els.undoBtn.disabled = false; 
             appState.students = []; 
-            
-            // Xoá cả trong storage để reset hoàn toàn
             localStorage.removeItem(STORAGE_KEY); 
-            
             renderReport(); 
             showToast('Đã xóa', 'Dữ liệu đã được làm sạch.');
         } 
@@ -299,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     els.exportPngBtn.addEventListener('click', () => {
         const exportDiv = document.createElement('div');
-        Object.assign(exportDiv.style, { position: 'fixed', top: '0', left: '-9999px', zIndex: '9999', width: '650px', backgroundColor: '#ffffff', color: '#1a1a1a', fontFamily: "'Be Vietnam Pro', sans-serif", padding: '40px', boxSizing: 'border-box' });
+        Object.assign(exportDiv.style, { position: 'fixed', top: '0', left: '-9999px', zIndex: '9999', width: '700px', backgroundColor: '#ffffff', color: '#1a1a1a', fontFamily: "'Be Vietnam Pro', sans-serif", padding: '40px', boxSizing: 'border-box' });
         
         const groupedData = {};
         appState.students.forEach(s => { const v = s.violation || 'Lỗi khác'; if (!groupedData[v]) groupedData[v] = []; groupedData[v].push(s); });
@@ -307,18 +310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let groupsHtml = '', sttTotal = 1;
         for (const [vName, students] of Object.entries(groupedData)) {
             let studentsHtml = '';
-            students.forEach(s => studentsHtml += `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; color: #64748b; font-weight: 600; text-align: center; width: 50px;">${sttTotal++}</td><td style="padding: 10px;"><span style="font-weight: 700; color: #1e293b; text-transform: uppercase; font-size: 14px;">${s.name}</span></td><td style="padding: 10px; text-align: right;"><span style="background-color: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 13px;">${s.class}</span></td></tr>`);
+            // Thêm cột thời gian vào bill xuất ra
+            students.forEach(s => studentsHtml += `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; color: #64748b; font-weight: 600; text-align: center; width: 40px;">${sttTotal++}</td><td style="padding: 10px; color: #64748b; font-family: monospace; font-size: 13px; text-align: center; width: 60px;">${formatTime(s.time)}</td><td style="padding: 10px;"><span style="font-weight: 700; color: #1e293b; text-transform: uppercase; font-size: 14px;">${s.name}</span></td><td style="padding: 10px; text-align: right;"><span style="background-color: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 13px;">${s.class}</span></td></tr>`);
+            
             groupsHtml += `<div style="margin-bottom: 20px;"><div style="background-color: #eff6ff; border-left: 5px solid #2563eb; padding: 8px 15px; margin-bottom: 5px;"><h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #1e40af; text-transform: uppercase;">${vName} <span style="font-weight: normal; font-size: 12px; color: #64748b; margin-left: 5px;">(${students.length} HS)</span></h3></div><table style="width: 100%; border-collapse: collapse; font-size: 14px;"><tbody>${studentsHtml}</tbody></table></div>`;
         }
 
         let metaHtml = '';
         if (els.opts.code.checked) metaHtml += `<div><span style="color: #64748b; font-weight: 600;">Mã:</span> <span style="font-weight: 700;">#${Math.floor(100000 + Math.random() * 900000)}</span></div>`;
-        if (els.opts.date.checked || els.opts.time.checked) {
-            let timeStr = '';
-            if (els.opts.date.checked) timeStr += new Date().toLocaleDateString('vi-VN');
-            if (els.opts.time.checked) timeStr += (timeStr ? ' - ' : '') + new Date().toLocaleTimeString('vi-VN');
-            metaHtml += `<div style="text-align: right;"><span style="color: #64748b; font-weight: 600;">Thời gian:</span> <span style="font-weight: 700;">${timeStr}</span></div>`;
-        }
+        if (els.opts.date.checked) metaHtml += `<div style="text-align: right;"><span style="color: #64748b; font-weight: 600;">Ngày:</span> <span style="font-weight: 700;">${new Date().toLocaleDateString('vi-VN')}</span></div>`;
         if (els.opts.monitor.checked) metaHtml += `<div><span style="color: #64748b; font-weight: 600;">Giám thị:</span> <span style="font-weight: 700; text-transform: uppercase;">${appState.monitorName}</span></div>`;
         if (els.opts.class.checked) metaHtml += `<div style="text-align: right;"><span style="color: #64748b; font-weight: 600;">Lớp trực:</span> <span style="font-weight: 700;">${appState.monitorClass}</span></div>`;
 
@@ -339,26 +339,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     els.exportExcelBtn.addEventListener('click', () => {
         const wb = XLSX.utils.book_new();
-        const wsData = [['TRUNG TÂM GDTX - NN, TH TỈNH LÂM ĐỒNG', '', '', ''], ['DANH SÁCH VI PHẠM', '', '', '']];
+        const wsData = [['TRUNG TÂM GDTX - NN, TH TỈNH LÂM ĐỒNG', '', '', '', ''], ['DANH SÁCH VI PHẠM', '', '', '', '']];
         
-        if (els.opts.monitor.checked) wsData.push([`Giám thị: ${appState.monitorName}`, '', '', '']);
-        if (els.opts.class.checked) wsData.push([`Lớp trực: ${appState.monitorClass}`, '', '', '']);
+        if (els.opts.monitor.checked) wsData.push([`Giám thị: ${appState.monitorName}`, '', '', '', '']);
+        if (els.opts.class.checked) wsData.push([`Lớp trực: ${appState.monitorClass}`, '', '', '', '']);
+        if (els.opts.date.checked) wsData.push([`Ngày: ${new Date().toLocaleDateString('vi-VN')}`, '', '', '', '']);
         
-        let timeStr = '';
-        if (els.opts.date.checked) timeStr += new Date().toLocaleDateString('vi-VN');
-        if (els.opts.time.checked) timeStr += (timeStr ? ' - ' : '') + new Date().toLocaleTimeString('vi-VN');
-        if (timeStr) wsData.push([`Thời gian: ${timeStr}`, '', '', '']);
-        
-        wsData.push(['', '', '', ''], ['STT', 'Họ và Tên', 'Lớp', 'Lỗi Vi Phạm']);
-        appState.students.forEach((s, i) => wsData.push([i + 1, s.name, s.class, s.violation]));
+        // Thêm cột Thời gian vào header Excel
+        wsData.push(['', '', '', '', ''], ['STT', 'Thời gian', 'Họ và Tên', 'Lớp', 'Lỗi Vi Phạm']);
+        appState.students.forEach((s, i) => wsData.push([i + 1, formatTime(s.time), s.name, s.class, s.violation]));
         
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws['!cols'] = [{wch: 5}, {wch: 30}, {wch: 10}, {wch: 40}];
+        ws['!cols'] = [{wch: 5}, {wch: 10}, {wch: 30}, {wch: 10}, {wch: 40}];
         XLSX.utils.book_append_sheet(wb, ws, "Vi Pham");
         XLSX.writeFile(wb, `DS_Vi_Pham_${Date.now()}.xlsx`);
         showToast('Thành công', 'Đã xuất Excel.');
     });
 
-    // KHỞI ĐỘNG: KIỂM TRA DỮ LIỆU CŨ
     loadFromLocal();
 });
