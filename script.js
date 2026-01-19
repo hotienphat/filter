@@ -57,12 +57,15 @@ document.addEventListener('DOMContentLoaded', function() {
         undoBtn: document.getElementById('undo-btn'),
         redoBtn: document.getElementById('redo-btn'),
         loadingSpinner: document.getElementById('loading-spinner'),
+        loadingText: document.getElementById('loading-text'),
         alertModal: document.getElementById('alert-modal'),
         alertContent: document.getElementById('alert-modal-content'),
         alertTitle: document.getElementById('alert-title'),
         alertMessage: document.getElementById('alert-message'),
         alertCloseBtn: document.getElementById('alert-close-btn'),
         micBtn: document.getElementById('mic-btn'),
+        ocrBtn: document.getElementById('ocr-btn'),
+        ocrInput: document.getElementById('ocr-input'),
         clearTextBtn: document.getElementById('clear-text-btn'),
         clockDisplay: document.getElementById('clock-display')
     };
@@ -314,6 +317,45 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         els.micBtn.style.display = 'none'; // Ẩn nếu trình duyệt không hỗ trợ
     }
+
+    // 2.5 OCR Input (Scan ảnh)
+    els.ocrBtn.addEventListener('click', () => els.ocrInput.click());
+
+    els.ocrInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Hiển thị loading
+        els.loadingSpinner.classList.remove('hidden');
+        if (els.loadingText) els.loadingText.textContent = "Đang quét văn bản từ ảnh...";
+
+        try {
+            // Sử dụng Tesseract để đọc ảnh
+            // 'vie' là mã ngôn ngữ cho tiếng Việt
+            const { data: { text } } = await Tesseract.recognize(
+                file,
+                'vie',
+                { logger: m => console.log(m) }
+            );
+            
+            // Xử lý văn bản thô một chút trước khi đưa vào input
+            const currentText = els.textInput.value;
+            // Thêm xuống dòng nếu đang có chữ
+            const separator = (currentText && !currentText.endsWith('\n')) ? '\n' : '';
+            
+            els.textInput.value = currentText + separator + text;
+            showAlert('Quét thành công', 'Đã thêm nội dung từ ảnh vào ô nhập liệu.');
+
+        } catch (error) {
+            console.error(error);
+            showAlert('Lỗi OCR', 'Không thể đọc được ảnh. Vui lòng thử lại với ảnh rõ nét hơn.', true);
+        } finally {
+            els.loadingSpinner.classList.add('hidden');
+            if (els.loadingText) els.loadingText.textContent = "Đang phân tích dữ liệu..."; // Reset text
+            els.ocrInput.value = ''; // Reset input để chọn lại cùng 1 file nếu cần
+        }
+    });
+
 
     els.clearTextBtn.addEventListener('click', () => {
         els.textInput.value = '';
