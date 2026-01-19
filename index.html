@@ -3,114 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiện ích lọc các lỗi vi phạm của học sinh</title>
-    <link rel="icon" type="image/x-icon" href="./Logoweb.svg">
+    <title>Trợ Lý Giám Thị AI - Phiên bản Nâng cấp</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    
+    <!-- Thư viện -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- Font chữ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS Riêng -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="school-bg text-gray-200 min-h-screen flex items-center justify-center p-4">
+<body class="school-bg text-gray-200 min-h-screen flex items-center justify-center p-2 sm:p-4">
 
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 backdrop-blur-md flex items-center justify-center z-50">
-        <div class="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-2xl text-center">
-            <h2 class="text-3xl font-bold text-white mb-2">Thông tin Giám thị</h2>
-            <p class="text-gray-400 mb-6">Vui lòng nhập thông tin của bạn để tiếp tục.</p>
-            <div class="space-y-4">
-                <input type="text" id="user-name-input" placeholder="Nhập họ và tên..." class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
-                <input type="text" id="user-class-input" placeholder="Nhập lớp hoặc chức vụ..." class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+    <!-- Màn hình đăng nhập -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 bg-opacity-95 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-500">
+        <div class="w-full max-w-md bg-slate-800 p-8 rounded-2xl shadow-2xl text-center border border-slate-700">
+            <div class="mb-6 inline-block p-4 rounded-full bg-blue-600/20 text-blue-400">
+                <i class="fas fa-user-shield text-4xl"></i>
             </div>
-            <button id="access-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-lg mt-6 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:transform-none" disabled>
-                Truy cập
+            <h2 class="text-3xl font-bold text-white mb-2">Trợ Lý Giám Thị AI</h2>
+            <p class="text-gray-400 mb-6 text-sm">Nhập thông tin ca trực để bắt đầu</p>
+            <div class="space-y-4">
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3 top-3.5 text-gray-500"></i>
+                    <input type="text" id="user-name-input" placeholder="Họ và tên của bạn..." class="w-full pl-10 p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-users-rectangle absolute left-3 top-3.5 text-gray-500"></i>
+                    <input type="text" id="user-class-input" placeholder="Lớp / Chức vụ (VD: 12A1)..." class="w-full pl-10 p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none">
+                </div>
+            </div>
+            <button id="access-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition-all transform hover:scale-[1.02] shadow-lg mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>Vào ca trực</span> <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
 
-    <main class="w-full max-w-6xl mx-auto bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 md:p-8 space-y-8 hidden">
-        <header class="text-center border-b border-gray-700 pb-4">
-            <h1 class="text-3xl md:text-4xl font-bold text-white">Tiện ích Lọc Lỗi Vi phạm của Học sinh</h1>
-            <p class="text-gray-400 mt-2">Công cụ hỗ trợ giám thị tổng hợp và xuất báo cáo vi phạm.</p>
-        </header>
+    <!-- Màn hình chính -->
+    <main class="w-full max-w-7xl mx-auto glass-panel rounded-2xl shadow-2xl p-4 md:p-6 space-y-6 hidden flex-col md:flex-row gap-6">
+        
+        <!-- Cột Trái: Nhập liệu -->
+        <div class="w-full md:w-5/12 space-y-5 flex flex-col">
+            <header class="pb-2 border-b border-gray-700">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-pen-to-square text-blue-400"></i> Nhập Vi Phạm
+                </h1>
+                <p class="text-gray-400 text-sm mt-1">Hỗ trợ nhập tắt, tự sửa lỗi chính tả</p>
+            </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="space-y-6">
-                <h2 class="text-2xl font-semibold text-white">1. Nhập Dữ liệu Vi phạm</h2>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="font-semibold text-gray-300 text-sm">Nhập văn bản (Mỗi lỗi 1 dòng)</label>
+                    <div class="flex gap-2">
+                         <button id="mic-btn" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors text-xs flex items-center gap-1" title="Nhập bằng giọng nói">
+                            <i class="fas fa-microphone"></i> <span>Nói</span>
+                        </button>
+                        <button id="clear-text-btn" class="text-gray-400 hover:text-white text-xs underline">Xóa trắng</button>
+                    </div>
+                </div>
                 
-                <div class="bg-gray-900/50 p-6 rounded-xl">
-                    <h3 class="font-bold text-lg mb-3">Nhập liệu thủ công</h3>
-                    <textarea id="text-input" rows="10" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 custom-scrollbar" 
-                    placeholder="Nhập dữ liệu vào đây. Dữ liệu có thể sử dụng dấu '-' hoặc để dấu cách.
-Ví dụ:
-Nguyễn Văn A - 10C1 - muộn
-Trần Thị B 11B2 thẻ
-Phan Thanh C 12A1 xe"></textarea>
+                <div class="relative flex-grow">
+                    <textarea id="text-input" class="w-full h-full min-h-[200px] p-3 bg-slate-700/80 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none custom-scrollbar font-mono text-sm leading-relaxed" 
+                    placeholder="Gợi ý nhập nhanh:
+- nam 10a1 muon
+- nguyen van a 12c5 khong the
+- tran b 11b2 dep le"></textarea>
+                    
+                    <!-- Floating Process Button -->
+                    <button id="process-btn" class="absolute bottom-4 right-4 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 flex items-center gap-2 z-10">
+                        <i class="fas fa-robot"></i> <span>Xử lý AI</span>
+                    </button>
                 </div>
-
-                <div class="bg-gray-900/50 p-6 rounded-xl">
-                    <h3 class="font-bold text-lg mb-3">Tải lên tệp Excel (.xlsx)</h3>
-                    <p class="text-sm text-gray-400 mb-4">Tệp Excel cần có 3 cột: <strong>Họ và tên</strong>, <strong>Lớp</strong>, <strong>Lỗi vi phạm</strong>.</p>
-                    <input type="file" id="excel-input" accept=".xlsx, .xls" class="block w-full text-sm text-gray-400
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-600 file:text-white
-                        hover:file:bg-blue-700 cursor-pointer"/>
-                </div>
-
-                <button id="process-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-lg">
-                    Xử lý & Cập nhật Báo cáo
-                </button>
-                 <div id="loading-spinner" class="hidden text-center">
-                    <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="mt-2 text-gray-300">Đang xử lý dữ liệu...</p>
+                
+                <div class="mt-3 text-xs text-gray-500 italic">
+                    * Hệ thống sẽ tự động viết hoa tên (Nguyễn Văn A) và lớp (10A1).
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <h2 class="text-2xl font-semibold text-white">2. Kết quả Tổng hợp</h2>
-                <div id="output-section" class="bg-gray-900/50 p-6 rounded-xl min-h-[400px] flex flex-col justify-between">
-                    <div class="h-[450px] overflow-y-auto overflow-x-auto custom-scrollbar pr-2">
-                        <div id="report-container" class="rounded-lg">
-                             <p class="text-gray-400 text-center py-20">Chưa có dữ liệu. Vui lòng nhập thông tin và nhấn "Xử lý" để xem báo cáo.</p>
-                        </div>
+            <!-- Import Excel Option -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <label class="flex items-center gap-2 cursor-pointer hover:text-blue-400 transition-colors">
+                    <i class="fas fa-file-excel text-green-500"></i>
+                    <span class="font-semibold text-sm">Hoặc tải lên file Excel</span>
+                    <input type="file" id="excel-input" accept=".xlsx, .xls" class="hidden">
+                </label>
+            </div>
+        </div>
+
+        <!-- Cột Phải: Kết quả -->
+        <div class="w-full md:w-7/12 flex flex-col space-y-5">
+            <header class="pb-2 border-b border-gray-700 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-list-check text-green-400"></i> Danh Sách Vi Phạm
+                    </h2>
+                    <p id="clock-display" class="text-blue-300 text-sm font-mono mt-1">...</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="undo-btn" class="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg disabled:opacity-30" title="Hoàn tác"><i class="fas fa-undo"></i></button>
+                    <button id="redo-btn" class="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg disabled:opacity-30" title="Làm lại"><i class="fas fa-redo"></i></button>
+                </div>
+            </header>
+
+            <div id="output-section" class="bg-slate-800/50 rounded-xl border border-slate-700 flex-grow flex flex-col overflow-hidden h-[500px]">
+                <!-- Toolbar -->
+                <div class="p-3 border-b border-slate-700 flex flex-wrap gap-2 justify-between bg-slate-800/80">
+                    <div class="flex gap-2">
+                        <button id="edit-btn" class="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold text-white flex items-center gap-1 transition-colors">
+                            <i class="fas fa-edit"></i> Sửa
+                        </button>
+                        <button id="save-btn" class="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold text-white items-center gap-1 transition-colors hidden">
+                            <i class="fas fa-save"></i> Lưu
+                        </button>
                     </div>
-                    <div id="report-actions" class="mt-6 space-y-3 hidden">
-                         <div id="view-mode-buttons">
-                            <button id="export-png-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-lg mb-3">
-                                Tải về ảnh (PNG)
-                            </button>
-                            <button id="export-excel-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-lg mb-3">
-                                Tải về file Excel (.xlsx)
-                            </button>
-                            <div class="grid grid-cols-3 gap-3">
-                                <button id="edit-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md">
-                                    Chỉnh sửa Báo cáo
-                                </button>
-                                <button id="undo-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                                    Hoàn tác
-                                </button>
-                                <button id="redo-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                                    Làm lại
-                                </button>
-                            </div>
-                        </div>
-                        <div id="edit-mode-buttons" class="hidden">
-                             <div class="grid grid-cols-2 gap-3">
-                                <button id="save-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-md">
-                                    Lưu thay đổi
-                                </button>
-                                <button id="cancel-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-md">
-                                    Hủy bỏ
-                                </button>
-                            </div>
+                    <div class="flex gap-2">
+                        <button id="export-png-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white flex items-center gap-1 transition-colors">
+                            <i class="fas fa-image"></i> PNG
+                        </button>
+                        <button id="export-excel-btn" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded text-xs font-bold text-white flex items-center gap-1 transition-colors">
+                            <i class="fas fa-file-csv"></i> Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Content -->
+                <div class="flex-grow overflow-auto custom-scrollbar p-4 relative">
+                    <div id="loading-spinner" class="absolute inset-0 bg-slate-900/50 flex flex-col items-center justify-center hidden z-20 backdrop-blur-sm">
+                        <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i>
+                        <p class="mt-2 text-sm text-blue-300 animate-pulse">Đang phân tích dữ liệu...</p>
+                    </div>
+                    
+                    <div id="report-container">
+                        <div class="flex flex-col items-center justify-center h-full text-gray-500 mt-20">
+                            <i class="fas fa-clipboard-list text-6xl mb-4 opacity-20"></i>
+                            <p>Chưa có dữ liệu vi phạm.</p>
+                            <p class="text-xs mt-1">Nhập dữ liệu bên trái và nhấn "Xử lý AI"</p>
                         </div>
                     </div>
                 </div>
@@ -118,16 +154,19 @@ Phan Thanh C 12A1 xe"></textarea>
         </div>
     </main>
 
-    <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
-        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-11/12 max-w-md text-center transform transition-all duration-300 scale-95 opacity-0" id="alert-modal-content">
-            <h3 id="alert-title" class="text-xl font-bold text-white mb-4">Thông báo</h3>
-            <p id="alert-message" class="text-gray-300 mb-6"></p>
-            <div class="flex justify-center gap-4">
-                <button id="alert-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Đã hiểu</button>
+    <!-- Modal Thông báo -->
+    <div id="alert-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center border border-slate-600 transform scale-95 opacity-0 transition-all duration-300" id="alert-modal-content">
+            <div id="alert-icon" class="mb-4 text-4xl text-yellow-500">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
+            <h3 id="alert-title" class="text-xl font-bold text-white mb-2">Thông báo</h3>
+            <p id="alert-message" class="text-gray-300 mb-6 text-sm"></p>
+            <button id="alert-close-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2.5 px-4 rounded-lg transition-colors">Đóng</button>
         </div>
     </div>
 
+    <!-- JS Riêng -->
     <script src="script.js"></script>
 </body>
 </html>
