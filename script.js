@@ -7,18 +7,36 @@ document.addEventListener('DOMContentLoaded', function() {
         'MANG_DEP_LE': 'Mang dép lê',
         'DI_XE_50CC': 'Đi xe trên 50cc',
         'NHUOM_TOC': 'Nhuộm tóc',
-        'KHONG_SO_VIN': 'Không sơ vin'
+        'KHONG_SO_VIN': 'Không đóng thùng', // Đã sửa từ 'Không sơ vin' thành 'Không đóng thùng'
+        'KHONG_MAC_AO_DAI': 'Không mặc áo dài' // Đã thêm mới lỗi này
     };
 
     // Mapping từ khóa tự nhiên sang mã lỗi (AI Logic)
+    // Lưu ý: Các key ở đây phải là chữ thường không dấu
     const VIOLATION_KEYWORDS = [
-        { keys: ['khong mang the', 'quen the', 'khong the', 'ko the', 'k the', 'thieu the'], value: VIOLATIONS.KHONG_MANG_THE },
+        // Thẻ - the - th => không mang thẻ
+        { keys: ['khong mang the', 'quen the', 'khong the', 'ko the', 'k the', 'thieu the', 'the', 'th'], value: VIOLATIONS.KHONG_MANG_THE },
+        
+        // Đi học muộn (giữ nguyên các từ khóa cũ)
         { keys: ['di hoc muon', 'tre', 'muon', 'di muon', 'bi muon', 'muon hoc'], value: VIOLATIONS.DI_HOC_MUON },
-        { keys: ['khong mac ao doan', 'ao doan', 'khong ao doan', 'ko ao doan', 'thieu ao doan'], value: VIOLATIONS.KHONG_MAC_AO_DOAN },
+        
+        // Áo - áo => Không mặc áo đoàn
+        { keys: ['khong mac ao doan', 'ao doan', 'khong ao doan', 'ko ao doan', 'thieu ao doan', 'ao'], value: VIOLATIONS.KHONG_MAC_AO_DOAN },
+        
+        // Mang dép lê (giữ nguyên)
         { keys: ['mang dep', 'dep le', 'di dep'], value: VIOLATIONS.MANG_DEP_LE },
-        { keys: ['xe tren 50', 'xe 50', 'xe phan khoi lon', 'xe may'], value: VIOLATIONS.DI_XE_50CC },
-        { keys: ['nhuom toc', 'toc mau'], value: VIOLATIONS.NHUOM_TOC },
-        { keys: ['so vin', 'khong so vin', 'bo ao'], value: VIOLATIONS.KHONG_SO_VIN }
+        
+        // xe - máy - may - Máy => Đi xe trên 50CC
+        { keys: ['xe tren 50', 'xe 50', 'xe phan khoi lon', 'xe may', 'xe', 'may'], value: VIOLATIONS.DI_XE_50CC },
+        
+        // Tóc - tóc - toc => Nhuộm tóc
+        { keys: ['nhuom toc', 'toc mau', 'toc'], value: VIOLATIONS.NHUOM_TOC },
+        
+        // Thùng - không bỏ áo => không đóng thùng
+        { keys: ['so vin', 'khong so vin', 'bo ao', 'thung', 'khong bo ao', 'khong dong thung', 'dong thung'], value: VIOLATIONS.KHONG_SO_VIN },
+        
+        // Áo dài - áo dài - aod -ao dai - aodai => Không mặc áo dài
+        { keys: ['khong mac ao dai', 'ao dai', 'khong ao dai', 'aod', 'aodai'], value: VIOLATIONS.KHONG_MAC_AO_DAI }
     ];
 
     // --- DOM ELEMENTS ---
