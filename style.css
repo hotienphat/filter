@@ -1,58 +1,88 @@
 body {
     font-family: 'Be Vietnam Pro', sans-serif;
+    background-color: #0f172a; /* Slate 900 */
 }
 .school-bg {
-    background-color: #1a202c;
+    background-image: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url('https://img.freepik.com/free-vector/high-school-building-flat-style_23-2147544903.jpg?w=1380&t=st=1684346736~exp=1684347336~hmac=55e5b3b5b5b5b5b5b5b5b5b5b5b5b5b5');
     background-size: cover;
     background-position: center;
+    background-attachment: fixed;
 }
+
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #2d3748;
+    background: #1e293b;
+    border-radius: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #4a5568;
+    background: #475569;
     border-radius: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #718096;
+    background: #64748b;
 }
+
 [contenteditable="true"] {
-    outline: 2px dashed #4299e1;
-    background-color: #2d3748;
+    outline: 2px dashed #3b82f6;
+    background-color: #1e293b;
     color: white;
     padding: 4px;
     border-radius: 4px;
 }
 
-/* --- CSS MỚI ĐƯỢC THÊM VÀO ĐỂ TỐI ƯU HÓA ẢNH XUẤT RA --- */
-/* Các quy tắc này chỉ áp dụng khi xuất file PNG */
+/* Animation cho Micro khi đang ghi âm */
+.mic-active {
+    animation: pulse-red 1.5s infinite;
+    background-color: #ef4444 !important;
+}
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* --- CSS CHO XUẤT ẢNH --- */
 .export-style {
-    padding: 16px !important; /* Giảm padding tổng thể */
-    font-size: 12px !important; /* Giảm kích thước chữ cơ bản */
+    padding: 20px !important;
+    background-color: white !important;
+    color: black !important;
+    font-family: 'Be Vietnam Pro', sans-serif !important;
+    width: 800px !important; /* Cố định chiều rộng cho đẹp */
 }
-.export-style .report-header {
-    padding-bottom: 8px !important;
-    margin-bottom: 12px !important;
+.export-style table {
+    width: 100% !important;
+    border-collapse: collapse !important;
 }
-.export-style h2 {
-    font-size: 18px !important; /* Giảm kích thước tiêu đề chính */
+.export-style th {
+    background-color: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    padding: 8px !important;
+    text-align: left !important;
+    color: #111827 !important;
 }
-.export-style h3 {
-    font-size: 14px !important; /* Giảm kích thước tiêu đề phụ */
-    padding-bottom: 4px !important;
-    margin-bottom: 8px !important;
+.export-style td {
+    border: 1px solid #e5e7eb !important;
+    padding: 8px !important;
+    color: #374151 !important;
 }
-.export-style .mb-6 {
-    margin-bottom: 16px !important; /* Giảm khoảng cách giữa các mục vi phạm */
+.export-style .violation-header {
+    background-color: #e5e7eb !important;
+    font-weight: bold !important;
+    padding: 10px !important;
+    margin-top: 20px !important;
+    border-left: 4px solid #3b82f6 !important;
 }
-.export-style th, .export-style td {
-    padding: 5px 8px !important; /* Giảm padding trong các ô của bảng */
-    font-size: 12px !important;
-}
-.export-style .text-sm {
-    font-size: 11px !important;
+.export-style h2 { font-size: 24px !important; color: #1e3a8a !important; margin-bottom: 5px !important; }
+.export-style p { margin: 2px 0 !important; color: #4b5563 !important; }
+
+/* Hiệu ứng Glassmorphism */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
