@@ -7,36 +7,36 @@ document.addEventListener('DOMContentLoaded', function() {
         'MANG_DEP_LE': 'Mang dép lê',
         'DI_XE_50CC': 'Đi xe trên 50cc',
         'NHUOM_TOC': 'Nhuộm tóc',
-        'KHONG_SO_VIN': 'Không đóng thùng', // Đã sửa từ 'Không sơ vin' thành 'Không đóng thùng'
-        'KHONG_MAC_AO_DAI': 'Không mặc áo dài' // Đã thêm mới lỗi này
+        'KHONG_SO_VIN': 'Không đóng thùng',
+        'KHONG_MAC_AO_DAI': 'Không mặc áo dài'
     };
 
     // Mapping từ khóa tự nhiên sang mã lỗi (AI Logic)
-    // Lưu ý: Các key ở đây phải là chữ thường không dấu
+    // ĐÃ CẬP NHẬT: Thêm các từ dễ bị nghe nhầm (Misheard words)
     const VIOLATION_KEYWORDS = [
-        // Thẻ - the - th => không mang thẻ
-        { keys: ['khong mang the', 'quen the', 'khong the', 'ko the', 'k the', 'thieu the', 'the', 'th'], value: VIOLATIONS.KHONG_MANG_THE },
+        // Thẻ - the - th => không mang thẻ (Nghe nhầm: thể, thae, the, th)
+        { keys: ['khong mang the', 'quen the', 'khong the', 'ko the', 'k the', 'thieu the', 'the', 'th', 'khong mang the', 'the hoc vien', 'the ten', 'khong deo the'], value: VIOLATIONS.KHONG_MANG_THE },
         
-        // Đi học muộn (giữ nguyên các từ khóa cũ)
-        { keys: ['di hoc muon', 'tre', 'muon', 'di muon', 'bi muon', 'muon hoc'], value: VIOLATIONS.DI_HOC_MUON },
+        // Đi học muộn (Nghe nhầm: mượn, muon)
+        { keys: ['di hoc muon', 'tre', 'muon', 'di muon', 'bi muon', 'muon hoc', 'di tre', 'vao muon', 'muon gio'], value: VIOLATIONS.DI_HOC_MUON },
         
-        // Áo - áo => Không mặc áo đoàn
-        { keys: ['khong mac ao doan', 'ao doan', 'khong ao doan', 'ko ao doan', 'thieu ao doan', 'ao'], value: VIOLATIONS.KHONG_MAC_AO_DOAN },
+        // Áo - áo => Không mặc áo đoàn (Nghe nhầm: áo đàn, ao doan)
+        { keys: ['khong mac ao doan', 'ao doan', 'khong ao doan', 'ko ao doan', 'thieu ao doan', 'ao', 'ao dan', 'khong mac ao'], value: VIOLATIONS.KHONG_MAC_AO_DOAN },
         
-        // Mang dép lê (giữ nguyên)
-        { keys: ['mang dep', 'dep le', 'di dep'], value: VIOLATIONS.MANG_DEP_LE },
+        // Mang dép lê (Nghe nhầm: dép là, dep le)
+        { keys: ['mang dep', 'dep le', 'di dep', 'dep', 'mang dep le', 'dep to ong'], value: VIOLATIONS.MANG_DEP_LE },
         
-        // xe - máy - may - Máy => Đi xe trên 50CC
-        { keys: ['xe tren 50', 'xe 50', 'xe phan khoi lon', 'xe may', 'xe', 'may'], value: VIOLATIONS.DI_XE_50CC },
+        // xe - máy - may - Máy => Đi xe trên 50CC (Nghe nhầm: se, xe may)
+        { keys: ['xe tren 50', 'xe 50', 'xe phan khoi lon', 'xe may', 'xe', 'may', 'se may', 'di xe', 'xe dap dien', 'xe may dien'], value: VIOLATIONS.DI_XE_50CC },
         
-        // Tóc - tóc - toc => Nhuộm tóc
-        { keys: ['nhuom toc', 'toc mau', 'toc'], value: VIOLATIONS.NHUOM_TOC },
+        // Tóc - tóc - toc => Nhuộm tóc (Nghe nhầm: nhộm, tốc)
+        { keys: ['nhuom toc', 'toc mau', 'toc', 'nhuom', 'toc xanh', 'toc do', 'toc vang', 'nhom toc'], value: VIOLATIONS.NHUOM_TOC },
         
-        // Thùng - không bỏ áo => không đóng thùng
-        { keys: ['so vin', 'khong so vin', 'bo ao', 'thung', 'khong bo ao', 'khong dong thung', 'dong thung'], value: VIOLATIONS.KHONG_SO_VIN },
+        // Thùng - không bỏ áo => không đóng thùng (Nghe nhầm: xơ vin, so vin)
+        { keys: ['so vin', 'khong so vin', 'bo ao', 'thung', 'khong bo ao', 'khong dong thung', 'dong thung', 'xo vin', 'khong xo vin'], value: VIOLATIONS.KHONG_SO_VIN },
         
         // Áo dài - áo dài - aod -ao dai - aodai => Không mặc áo dài
-        { keys: ['khong mac ao dai', 'ao dai', 'khong ao dai', 'aod', 'aodai'], value: VIOLATIONS.KHONG_MAC_AO_DAI }
+        { keys: ['khong mac ao dai', 'ao dai', 'khong ao dai', 'aod', 'aodai', 'ao day'], value: VIOLATIONS.KHONG_MAC_AO_DAI }
     ];
 
     // --- DOM ELEMENTS ---
@@ -86,12 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- HELPER FUNCTIONS ---
     
-    // Hàm viết hoa chữ cái đầu: "nguyễn văn a" -> "Nguyễn Văn A"
+    // Hàm viết hoa chữ cái đầu
     function toTitleCase(str) {
         return str.toLowerCase().replace(/(^|\s)\S/g, (L) => L.toUpperCase());
     }
 
-    // Hàm chuẩn hóa lớp: "10c1" -> "10C1"
+    // Hàm chuẩn hóa lớp
     function normalizeClass(str) {
         return str.toUpperCase().replace(/\s/g, '');
     }
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return item.value;
             }
         }
-        return toTitleCase(text); // Nếu không tìm thấy, giữ nguyên nhưng viết hoa đẹp
+        return toTitleCase(text);
     }
 
     function showAlert(title, message, isError = false) {
@@ -132,9 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- CORE LOGIC: SMART PARSER ---
-    // Đây là phần "AI" giúp xử lý nhập liệu lộn xộn
     function smartParseText(text) {
-        // Regex tìm lớp: Bắt đầu bằng 10, 11, 12, theo sau là chữ cái và số (VD: 10A1, 11C2, 12D)
         const classRegex = /\b(1[0-2][a-zA-Z]{1,2}\d{0,2})\b/i;
         
         return text.split('\n')
@@ -145,15 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 let className = '';
                 let rawViolation = '';
 
-                // 1. Tách lớp học ra trước (vì nó có định dạng rõ ràng nhất)
                 const classMatch = line.match(classRegex);
                 if (classMatch) {
                     className = normalizeClass(classMatch[0]);
-                    // Loại bỏ lớp khỏi chuỗi để xử lý phần còn lại
                     line = line.replace(classMatch[0], ' |split| ');
                 }
 
-                // 2. Nếu người dùng dùng dấu gạch ngang phân cách rõ ràng
                 if (line.includes('-') && !line.includes('|split|')) {
                     const parts = line.split('-').map(p => p.trim());
                     if (parts.length >= 2) {
@@ -162,25 +157,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         rawViolation = parts[parts.length - 1];
                     }
                 } else {
-                    // 3. Xử lý chuỗi hỗn độn "nguyen van a |split| di muon"
                     const parts = line.split('|split|').map(p => p.trim());
-                    
-                    // Strategy mới (FIXED): Tách từ phải sang trái để tìm lỗi
                     let fullText = parts.join(' ').replace(/\s+/g, ' ').trim(); 
                     let words = fullText.split(' ');
                     
                     let foundViolationCode = null;
-                    let violationTextLength = 0; // Số lượng từ thuộc về phần lỗi
+                    let violationTextLength = 0;
 
-                    // Thử ghép từ 1 đến 5 từ cuối cùng để xem có phải lỗi không
-                    for (let i = 1; i <= 5 && i <= words.length; i++) {
+                    for (let i = 1; i <= 6 && i <= words.length; i++) {
                         const suffixWords = words.slice(words.length - i);
                         const suffixText = suffixWords.join(' ');
                         const normalizedSuffix = removeAccents(suffixText.toLowerCase());
 
-                        // Check xem suffix này có match keyword nào không
                         for (const item of VIOLATION_KEYWORDS) {
-                            if (item.keys.includes(normalizedSuffix)) {
+                            // Check cả có dấu và không dấu
+                            const normalizedKeys = item.keys.map(k => removeAccents(k));
+                            if (item.keys.includes(normalizedSuffix) || normalizedKeys.includes(normalizedSuffix)) {
                                 foundViolationCode = item.value;
                                 violationTextLength = i;
                                 break;
@@ -191,18 +183,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (foundViolationCode) {
                         rawViolation = foundViolationCode;
-                        // Tên là phần còn lại sau khi bỏ các từ lỗi
                         const nameWords = words.slice(0, words.length - violationTextLength);
                         name = toTitleCase(nameWords.join(' '));
                     } else {
-                        // Nếu không tìm thấy lỗi theo keyword (scan ngược thất bại)
-                        // Fallback: 
                         if (parts.length > 1) {
-                             // Nếu có dấu split (do tách lớp), phần đầu là tên, phần sau là rác hoặc lỗi lạ
                              name = toTitleCase(parts[0]);
                              rawViolation = toTitleCase(parts[1]); 
                         } else {
-                            // Fallback cuối cùng: Coi toàn bộ là tên, lỗi chưa rõ
                             name = toTitleCase(fullText);
                             rawViolation = 'Chưa rõ lỗi';
                         }
@@ -210,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (name && className) {
-                    // Detect lại lần nữa để chắc chắn (dành cho trường hợp fallback)
                     const finalViolation = Object.values(VIOLATIONS).includes(rawViolation) 
                         ? rawViolation 
                         : detectViolation(rawViolation || 'Chưa rõ lỗi');
@@ -230,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- EVENT HANDLERS ---
 
-    // 1. Login
+    // 1. Login Logic
     const checkLogin = () => {
         els.accessBtn.disabled = !(els.userNameInput.value.trim() && els.userClassInput.value.trim());
     };
@@ -248,52 +234,96 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     });
 
-    // 2. Voice Input (Speech to Text)
-    if ('webkitSpeechRecognition' in window) {
-        const recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
+    // 2. Voice Input (CẢI TIẾN: REAL-TIME & CONTINUOUS)
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true; // Cho phép nói liên tục nhiều câu
+        recognition.interimResults = true; // Hiển thị kết quả tạm thời (Real-time)
         recognition.lang = 'vi-VN';
 
+        let finalTranscript = '';
+        let isListening = false;
+
         els.micBtn.addEventListener('click', () => {
-            if (els.micBtn.classList.contains('mic-active')) {
+            if (isListening) {
                 recognition.stop();
             } else {
+                finalTranscript = els.textInput.value; // Lấy nội dung hiện có làm mốc
+                if (finalTranscript && !finalTranscript.endsWith('\n')) {
+                    finalTranscript += '\n';
+                }
                 recognition.start();
-                els.micBtn.classList.add('mic-active');
-                els.micBtn.innerHTML = '<i class="fas fa-stop"></i> <span>Dừng</span>';
             }
         });
 
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            const currentText = els.textInput.value;
-            els.textInput.value = currentText + (currentText ? '\n' : '') + transcript;
-            els.micBtn.classList.remove('mic-active');
-            els.micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>Nói</span>';
+        recognition.onstart = () => {
+            isListening = true;
+            els.micBtn.classList.add('mic-active');
+            els.micBtn.classList.replace('bg-gray-700', 'bg-red-600');
+            els.micBtn.innerHTML = '<i class="fas fa-stop"></i> <span>Dừng</span>';
+            // Placeholder feedback
+            els.textInput.setAttribute('placeholder', 'Đang nghe... (Bạn cứ nói liên tục)');
         };
 
-        recognition.onerror = () => {
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    let sentence = event.results[i][0].transcript.trim();
+                    // Tự động xuống dòng sau mỗi câu (nếu câu đủ dài hoặc có vẻ là 1 mục nhập)
+                    finalTranscript += toTitleCase(sentence) + '\n';
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            // Cập nhật giao diện ngay lập tức
+            els.textInput.value = finalTranscript + interimTranscript;
+            // Tự động cuộn xuống dưới cùng
+            els.textInput.scrollTop = els.textInput.scrollHeight;
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech error:', event.error);
+            if (event.error === 'no-speech') {
+                // Không làm gì, cứ để nó chạy tiếp hoặc tự tắt
+                return; 
+            }
+            isListening = false;
             els.micBtn.classList.remove('mic-active');
+            els.micBtn.classList.replace('bg-red-600', 'bg-gray-700');
             els.micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>Nói</span>';
-            showAlert('Lỗi Micro', 'Không thể nhận diện giọng nói. Vui lòng kiểm tra micro.', true);
+            showAlert('Lỗi Micro', 'Micro bị gián đoạn hoặc không nghe thấy gì.', true);
         };
         
         recognition.onend = () => {
+            isListening = false;
             els.micBtn.classList.remove('mic-active');
+            els.micBtn.classList.replace('bg-red-600', 'bg-gray-700');
             els.micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>Nói</span>';
+            // Cập nhật lại finalTranscript vào input lần cuối để đảm bảo
+            if (els.textInput.value.trim() !== '') {
+                finalTranscript = els.textInput.value;
+                if (!finalTranscript.endsWith('\n')) finalTranscript += '\n';
+            }
         };
+
     } else {
         els.micBtn.style.display = 'none'; // Ẩn nếu trình duyệt không hỗ trợ
     }
 
-    els.clearTextBtn.addEventListener('click', () => els.textInput.value = '');
+    els.clearTextBtn.addEventListener('click', () => {
+        els.textInput.value = '';
+    });
 
     // 3. Process Data
     els.processBtn.addEventListener('click', async () => {
         els.loadingSpinner.classList.remove('hidden');
         els.processBtn.disabled = true;
 
-        // Simulate processing delay for "AI feel"
         setTimeout(async () => {
             let newStudents = [];
             const textValue = els.textInput.value.trim();
@@ -312,11 +342,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (newStudents.length > 0) {
-                    appState.history.push([...appState.data]); // Save state for Undo
-                    appState.redoStack = []; // Clear redo
+                    appState.history.push([...appState.data]);
+                    appState.redoStack = [];
                     appState.data = [...appState.data, ...newStudents];
                     renderReport();
-                    els.textInput.value = ''; // Clear input
+                    els.textInput.value = ''; 
                     els.excelInput.value = '';
                 } else {
                     showAlert('Không tìm thấy dữ liệu', 'Vui lòng kiểm tra lại định dạng nhập.');
@@ -329,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 els.processBtn.disabled = false;
                 updateUndoRedoUI();
             }
-        }, 600);
+        }, 500); // Giảm thời gian chờ giả lập xuống cho cảm giác nhanh hơn
     });
 
     // 4. Excel Parsing
@@ -342,10 +372,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    // Simple mapping logic
-                    // Assume Row 1 is header
                     if (json.length < 2) return resolve([]);
-                    // Detect columns by header keywords
+                    
                     const headers = json[0].map(h => removeAccents(String(h).toLowerCase()));
                     const nameIdx = headers.findIndex(h => h.includes('ten'));
                     const classIdx = headers.findIndex(h => h.includes('lop'));
@@ -382,7 +410,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Group by Violation
         const grouped = appState.data.reduce((acc, curr) => {
             const v = curr.violation;
             if (!acc[v]) acc[v] = [];
@@ -444,18 +471,16 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="mt-8 pt-4 border-t text-center text-xs text-gray-400">
                 Báo cáo được tạo tự động bởi hệ thống Trợ Lý Giám Thị AI
             </div>
-        </div>`; // Close report-printable
+        </div>`; 
 
         container.innerHTML = html;
 
-        // Add Delete Event Listeners if editing
         if (appState.isEditing) {
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const row = e.target.closest('tr');
                     const id = row.dataset.id;
                     row.remove();
-                    // Note: actual data update happens on Save
                 });
             });
         }
@@ -494,10 +519,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     els.saveBtn.addEventListener('click', () => {
-        appState.history.push([...appState.data]); // Save before modify
+        appState.history.push([...appState.data]); 
         appState.redoStack = [];
 
-        // Re-scan DOM to update data
         const newDataSet = [];
         const rows = document.querySelectorAll('#report-printable tbody tr');
         rows.forEach(row => {
@@ -527,7 +551,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const element = document.getElementById('report-printable');
         if (!element) return showAlert('Lỗi', 'Chưa có báo cáo để xuất.', true);
 
-        // Clone to style specifically for export
         const clone = element.cloneNode(true);
         clone.classList.add('export-style');
         document.body.appendChild(clone);
@@ -549,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const wb = XLSX.utils.book_new();
         
-        // Format Data for Excel
         const wsData = [
             ['BÁO CÁO TỔNG HỢP VI PHẠM HỌC SINH'],
             [`Ngày: ${new Date().toLocaleDateString('vi-VN')}`],
@@ -571,10 +593,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Column widths
         ws['!cols'] = [{wch: 5}, {wch: 25}, {wch: 10}, {wch: 30}, {wch: 15}];
         
-        // Merge title
         ws['!merges'] = [
             { s: {r:0, c:0}, e: {r:0, c:4} }
         ];
