@@ -132,13 +132,35 @@
                         </div>
                     </div>
                     
-                    <div class="p-4 border-t border-gray-700 bg-gray-800/80 grid grid-cols-2 gap-4">
-                        <button id="export-png-btn" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fa-solid fa-image"></i> Xuất Ảnh (PNG)
-                        </button>
-                        <button id="export-excel-btn" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fa-solid fa-file-export"></i> Xuất Excel
-                        </button>
+                    <div class="p-4 border-t border-gray-700 bg-gray-800/80">
+                        <div class="mb-3 px-1">
+                            <p class="text-xs text-gray-400 font-bold uppercase mb-2">Tùy chọn hiển thị khi xuất:</p>
+                            <div class="flex flex-wrap gap-4 text-sm text-gray-300">
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white select-none">
+                                    <input type="checkbox" id="opt-date" checked class="accent-blue-500 w-4 h-4"> Ngày
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white select-none">
+                                    <input type="checkbox" id="opt-time" checked class="accent-blue-500 w-4 h-4"> Giờ
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white select-none">
+                                    <input type="checkbox" id="opt-monitor" checked class="accent-blue-500 w-4 h-4"> Giám thị
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white select-none">
+                                    <input type="checkbox" id="opt-class" checked class="accent-blue-500 w-4 h-4"> Lớp trực
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white select-none">
+                                    <input type="checkbox" id="opt-code" checked class="accent-blue-500 w-4 h-4"> Mã phiếu
+                                </label>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button id="export-png-btn" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-image"></i> Xuất Ảnh (PNG)
+                            </button>
+                            <button id="export-excel-btn" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-file-export"></i> Xuất Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
